@@ -1,0 +1,35 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+# Executables
+*.exe
+*.out
+*.app
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+# Shared objects (including DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+# Precompiled headers
+*.gch
+*.pch
+# Kernel module compile results
+*.mod*
+*.cmd
+tmp_versions/
+modules.order
+Module.symvers
+# Build directories (if applicable)
+build/
