@@ -7,20 +7,19 @@
 #include <stdbool.h>
 #include <signal.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 
 #define BUF_SIZE 4096
 #define BACKLOG  10
 
 int client_s;
-bool connected = false;
 
 void close_client() {
     if (close(client_s) < 0) {
         perror("Close Error");
-        exit(EXIT_FAILURE);
     }
-    connected = false;
+    client_s = -1;
     printf("Closed connection\n");
 }
 
@@ -28,7 +27,7 @@ void sigintHandler(int signal) {
     printf("Cought signal %d\n", signal);
     printf("Stoped...\n");
 
-    if (connected)
+    if (client_s >= 0)
         close_client();
 
     exit(EXIT_SUCCESS);
@@ -87,7 +86,6 @@ int main() {
             perror("Accept Error");
             continue;
         }
-        connected = true;
         client_counter++;
 
         // Print client info
@@ -119,11 +117,11 @@ int main() {
             while (sent < bytes) {
                 ssize_t k = send(client_s, buffer+sent, bytes-sent, 0);
                 if (k < 0) {
-                    printf("Send Error");
+                    perror("Send Error");
                     break;
                 }
+                printf("<<< Sent %ld byte to %d: %s\n", k, client_s, buffer+sent);
                 sent += k;
-                printf("<<< Sent %ld byte to %d: %s\n", k, client_s, buffer);
             }
         }
 
