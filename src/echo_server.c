@@ -8,6 +8,9 @@
 #include <signal.h>
 #include <arpa/inet.h>
 
+#define BUF_SIZE 20
+#define BACKLOG  10
+
 int client_s;
 bool connected = false;
 
@@ -26,8 +29,14 @@ void sigintHandler(int signal) {
     exit(0);
 }
 
+void close_client() {
+    if (close(client_s) < 0) {
+        perror("Close Error");
+    }
+    connected = false;
+}
+
 int main() {
-    const char buffer[256];
     int client_counter = 0;
 
     if (signal(SIGINT, sigintHandler) == SIG_ERR) {
@@ -46,17 +55,21 @@ int main() {
 
     if (s < 0) {
         perror("Socket Create Error");
-        return -1;
+        exit(EXIT_FAILURE);
     }
+
+    // Reuse port
+    int opt = 1;
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     if (bind(s, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
         perror("Bind Error");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
-    if (listen(s, 10) < 0) {
+    if (listen(s, BACKLOG) < 0) {
         perror("Listen Error");
-        return -1;
+        exit(EXIT_FAILURE);
     }
 
     printf("Listen...\n");
@@ -73,35 +86,39 @@ int main() {
         connected = true;
         client_counter++;
 
-        // Client info
-        printf("Accepted new connection №%d\nIP: %s\nPORT: %d\n", 
+        // Print client info
+        printf("\n====\nAccepted new connection №%d\nIP: %s\nPORT: %d\n===\n\n", 
             client_counter, 
             inet_ntoa(client_addr.sin_addr), 
             client_addr.sin_port);
 
-        // Read
-        int read = recv(client_s, (void*)buffer, sizeof(buffer), 0);
-        if (read < 0) {
-            perror("Recieve Error");
-            close(client_s);
-            continue;
+        // Read/Send
+        char buffer[BUF_SIZE];
+        ssize_t bytes = 0;
+        while ((bytes = recv(client_s, buffer, sizeof(buffer), 0)) > 0) {
+            if (bytes < 0) {
+                perror("Recieve Error");
+                close_client();
+                continue;
+            }
+            printf("Read %ld byte from %d: %s\n", bytes, client_s, buffer);
+            
+            // Send
+            ssize_t sent = 0;
+            while (sent < bytes) {
+                ssize_t k = send(client_s, buffer, sizeof(buffer), 0);
+                if (sent < 0) {
+                    printf("Send Error");
+                    close_client();
+                    continue;
+                }
+                sent += k;
+                printf("Sent %ld byte to %d: %s\n", bytes, client_s, buffer);
+            }
         }
-        printf("Read %d byte from %d: %s\n", read, client_s, buffer);
-
-        // Send
-        int sent = send(client_s, (void*)buffer, read, 0);
-        if (sent < 0) {
-            printf("Send Error");
-            close(client_s);
-            continue;
-        }
-        printf("Sent %d byte to %d\n", sent, client_s);
 
         // Close
-        if (close(client_s) < 0) {
-            perror("Close Error");
-        }
-        connected = false;
+        close_client();
         printf("Closed connection\n");
     }
 }
