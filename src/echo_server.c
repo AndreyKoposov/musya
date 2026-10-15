@@ -47,6 +47,7 @@ int main() {
 
     // Socket creation
     struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons((uint16_t)5000);
@@ -81,7 +82,7 @@ int main() {
         // Accept
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
-        int client_s = accept(s, (struct sockaddr*)&client_addr, &addr_len);
+        client_s = accept(s, (struct sockaddr*)&client_addr, &addr_len);
         if (client_s < 0) {
             perror("Accept Error");
             continue;
@@ -90,15 +91,18 @@ int main() {
         client_counter++;
 
         // Print client info
+        char ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &client_addr.sin_addr, ip, sizeof(ip));
         printf("\n====\nAccepted new connection №%d\nIP: %s\nPORT: %d\n===\n\n", 
             client_counter, 
-            inet_ntoa(client_addr.sin_addr), 
-            client_addr.sin_port);
+            ip, 
+            ntohs(client_addr.sin_port));
 
         // Read/Send
         char buffer[BUF_SIZE] = {0};
         ssize_t bytes = 0;
-        while ((bytes = recv(client_s, buffer, sizeof(buffer), 0)) >= 0) {
+        while (1) {
+            bytes = recv(client_s, buffer, sizeof(buffer)-1, 0);
             if (bytes < 0) {
                 perror("Recieve Error");
                 break;
@@ -107,13 +111,14 @@ int main() {
                 printf("Connection closed by client\n");
                 break;
             }
+            buffer[bytes] = '\0';
             printf(">>> Read %ld byte from %d: %s\n", bytes, client_s, buffer);
             
             // Send
             ssize_t sent = 0;
             while (sent < bytes) {
                 ssize_t k = send(client_s, buffer+sent, bytes-sent, 0);
-                if (sent < 0) {
+                if (k < 0) {
                     printf("Send Error");
                     break;
                 }
