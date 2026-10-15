@@ -13,7 +13,8 @@
 #define BUF_SIZE 4096
 #define BACKLOG  10
 
-int client_s;
+int client_s = -1;
+int s = -1;
 
 void close_client() {
     if (close(client_s) < 0) {
@@ -29,6 +30,9 @@ void sigintHandler(int signal) {
 
     if (client_s >= 0)
         close_client();
+
+    if (close(s) < 0)
+        exit(EXIT_FAILURE);
 
     exit(EXIT_SUCCESS);
 }
@@ -51,7 +55,7 @@ int main() {
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons((uint16_t)5000);
 
-    int s = socket(AF_INET, SOCK_STREAM, 0);
+    s = socket(AF_INET, SOCK_STREAM, 0);
 
     if (s < 0) {
         perror("Socket Create Error");
