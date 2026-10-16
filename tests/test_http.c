@@ -4,11 +4,12 @@
 
 #include "http.h"
 
+
 void test_add_status(void) {
     char buffer[256] = {0};
     char str_status[] = "HTTP/1.1 200 OK\r\n";
 
-    add_status(buffer, 200);
+    add_status(buffer, sizeof(buffer), 200);
     CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_status);
 }
 
@@ -16,7 +17,7 @@ void test_add_content_type(void) {
     char buffer[256] = {0};
     char str_content_type[] = "Content-Type: text/html; charset=utf-8\r\n";
 
-    add_content_type(buffer);
+    add_content_type(buffer, sizeof(buffer));
     CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_content_type);
 }
 
@@ -24,7 +25,7 @@ void test_add_content_length(void) {
     char buffer[256] = {0};
     char str_content_type[] = "Content-Length: 22\r\n";
 
-    add_content_length(buffer, 22);
+    add_content_length(buffer, sizeof(buffer), 22);
     CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_content_type);
 }
 
@@ -32,7 +33,7 @@ void test_add_connection_close(void) {
     char buffer[256] = {0};
     char str_content_close[] = "Connection: close\r\n";
 
-    add_connection_close(buffer);
+    add_connection_close(buffer, sizeof(buffer));
     CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_content_close);
 }
 
@@ -41,7 +42,7 @@ void test_add_body(void) {
     char str_body[] = "<h1>Hello, World!</h1>";
     char str_expected[] = "\r\n<h1>Hello, World!</h1>";
 
-    add_body(buffer, str_body);
+    add_body(buffer, sizeof(buffer), str_body);
     CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_expected);
 }
 
