@@ -4,15 +4,48 @@
 
 #include "http.h"
 
-
+// run command: gcc -Wall -Wextra -std=c17 -pedantic -Iinclude src/http.c tests/test_http.c -lcunit -o tests/test
 void test_add_status(void) {
-    char buffer[256];
+    char buffer[256] = {0};
     char str_status[] = "HTTP/1.1 200 OK\r\n";
 
     add_status(buffer, 200);
-    printf("\n%s = %s\n", buffer, str_status);
     CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_status);
 }
+
+void test_add_content_type(void) {
+    char buffer[256] = {0};
+    char str_content_type[] = "Content-Type: text/html; charset=utf-8\r\n";
+
+    add_content_type(buffer);
+    CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_content_type);
+}
+
+void test_add_content_length(void) {
+    char buffer[256] = {0};
+    char str_content_type[] = "Content-Length: 22\r\n";
+
+    add_content_length(buffer, 22);
+    CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_content_type);
+}
+
+void test_add_connection_close(void) {
+    char buffer[256] = {0};
+    char str_content_close[] = "Connection: close\r\n";
+
+    add_connection_close(buffer);
+    CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_content_close);
+}
+
+void test_add_body(void) {
+    char buffer[256] = {0};
+    char str_body[] = "<h1>Hello, World!</h1>";
+    char str_expected[] = "\r\n<h1>Hello, World!</h1>";
+
+    add_body(buffer, str_body);
+    CU_ASSERT_STRING_EQUAL_FATAL(buffer, str_expected);
+}
+
 
 int main() {
   CU_pSuite pSuite = NULL;
@@ -29,8 +62,12 @@ int main() {
 
   /* add the tests to the suite */
   /* NOTE - ORDER IS IMPORTANT - MUST TEST fread() AFTER fprintf() */
-  if ((NULL == CU_add_test(pSuite, "test of add_http function",
-                           test_add_status))) {
+  void* success = CU_add_test(pSuite, "test of add_status function", test_add_status);
+  success = CU_add_test(pSuite, "test of add_content_type function", test_add_content_type);
+  success = CU_add_test(pSuite, "test of add_content_length function", test_add_content_length);
+  success = CU_add_test(pSuite, "test of add_connection_close function", test_add_connection_close);
+  success = CU_add_test(pSuite, "test of add_body function", test_add_body);
+  if (success == NULL) {
     CU_cleanup_registry();
     return CU_get_error();
   }
