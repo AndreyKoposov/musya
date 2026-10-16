@@ -6,6 +6,8 @@
 #include "http.h"
 
 
+#define TMP_SIZE 64
+
 void get_gmt_date(char* date, size_t max_size) {
     time_t current_t;
     struct tm* ftime;
@@ -16,46 +18,36 @@ void get_gmt_date(char* date, size_t max_size) {
     strftime(date, max_size, "%a, %d %b %Y %H:%M:%S GMT", ftime);
 }
 
-void add_status(char* response, int status) {
-    char status_str[4];
-    snprintf(status_str, sizeof(status_str), "%d", status);
-
-    strcat(response, "HTTP/1.1 ");
-    strcat(response, status_str);
-    if (status == 200)
-        strcat(response, " OK\r\n");
-    else
-        strcat(response, " Not found\r\n");
+void add_status(char* response, size_t cap, int status) {
+    char tmp[TMP_SIZE];
+    snprintf(tmp, sizeof(tmp), "HTTP/1.1 %d %s\r\n", status, status == 200 ? "OK" : "Not Found");
+    strncat(response, tmp, cap - strlen(response) - 1);
 }
 
-void add_content_type(char* response) {
-    strcat(response, "Content-Type: text/html; charset=utf-8\r\n");
+void add_content_type(char* response, size_t cap) {
+    strncat(response, "Content-Type: text/html; charset=utf-8\r\n", cap - strlen(response) - 1);
 }
 
-void add_content_length(char* response, int length) {
-    char length_str[10];
-    snprintf(length_str, sizeof(length_str), "%d", length);
-
-    strcat(response, "Content-Length: ");
-    strcat(response, length_str);
-    strcat(response, "\r\n");
+void add_content_length(char* response, size_t cap, int length) {
+    char tmp[TMP_SIZE];
+    snprintf(tmp, sizeof(tmp), "Content-Length: %d\r\n", length);
+    strncat(response, tmp, cap - strlen(response) - 1);
 }
 
-void add_connection_close(char* response) {
-    strcat(response, "Connection: close\r\n");
+void add_connection_close(char* response, size_t cap) {
+    strncat(response, "Connection: close\r\n", cap - strlen(response) - 1);
 }
 
-void add_body(char* response, char* body) {
-    strcat(response, "\r\n");
-    strcat(response, body);
+void add_body(char* response, size_t cap, char* body) {
+    strncat(response, "\r\n", cap - strlen(response) - 1);
+    strncat(response, body, cap - strlen(response) - 1);
 }
 
-void add_date(char* response) {
-    strcat(response, "Date: ");
+void add_date(char* response, size_t cap) {
+    char tmp[2*TMP_SIZE];
+    char date[TMP_SIZE];
 
-    char date[80];
-    get_gmt_date(date, 80);
-    strcat(response, date);
-
-    strcat(response, "\r\n");
+    get_gmt_date(date, sizeof(date));
+    snprintf(tmp, sizeof(tmp), "Date: %s\r\n", date);
+    strncat(response, tmp, cap - strlen(response) - 1);
 }

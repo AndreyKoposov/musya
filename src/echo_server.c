@@ -39,17 +39,17 @@ void sigintHandler(int signal) {
     exit(EXIT_SUCCESS);
 }
 
-void send_all(char* buffer) {
+void send_all(int fd, char* buffer) {
     unsigned long sent = 0;
     size_t res_len = strlen(buffer);
 
     while (sent < res_len) {
-        ssize_t k = send(client_s, buffer+sent, res_len-sent, 0);
+        ssize_t k = send(fd, buffer+sent, res_len-sent, 0);
         if (k < 0) {
             perror("Send Error");
             break;
         }
-        printf("<<< Sent %ld byte to %d\n", k, client_s);
+        printf("<<< Sent %zd byte to %d\n", k, fd);
         sent += k;
     }
 }
@@ -117,34 +117,37 @@ int main() {
             ip, 
             ntohs(client_addr.sin_port));
 
-        // Read/Send
+        // Read
         char buffer[BUF_SIZE] = {0};
         ssize_t bytes = 0;
 
         bytes = recv(client_s, buffer, sizeof(buffer)-1, 0);
         if (bytes < 0) {
             perror("Recieve Error");
-            break;
+            close_client();
+            continue;
         }
         if (bytes == 0) {
             printf("Connection closed by client\n");
-            break;
+            close_client();
+            continue;
         }
         buffer[bytes] = '\0';
-        printf(">>> Read %ld byte from %d\n", bytes, client_s);
+        printf(">>> Read %zd byte from %d\n", bytes, client_s);
         
         // Send
         char body[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
+        size_t cap = sizeof(buffer);
+        memset(buffer, 0, cap);
 
-        memset(buffer, 0, sizeof(buffer));
-        add_status(buffer, 200);
-        add_content_type(buffer);
-        add_date(buffer);
-        add_content_length(buffer, strlen(body));
-        add_connection_close(buffer);
-        add_body(buffer, body);
+        add_status(buffer, cap, 200);
+        add_content_type(buffer, cap);
+        add_date(buffer, cap);
+        add_content_length(buffer, cap, strlen(body));
+        add_connection_close(buffer, cap);
+        add_body(buffer, cap, body);
 
-        send_all(buffer);
+        send_all(client_s, buffer);
 
         // Close
         close_client();
