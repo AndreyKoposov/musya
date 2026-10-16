@@ -4,7 +4,6 @@
 
 #include "http.h"
 
-// run command: gcc -Wall -Wextra -std=c17 -pedantic -Iinclude src/http.c tests/test_http.c -lcunit -o tests/test
 void test_add_status(void) {
     char buffer[256] = {0};
     char str_status[] = "HTTP/1.1 200 OK\r\n";

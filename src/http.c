@@ -1,9 +1,20 @@
-#include "http.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
+#include "http.h"
+
+
+void get_gmt_date(char* date, size_t max_size) {
+    time_t current_t;
+    struct tm* ftime;
+
+    time(&current_t);
+    ftime = gmtime(&current_t);
+
+    strftime(date, max_size, "%a, %d %b %Y %H:%M:%S GMT", ftime);
+}
 
 void add_status(char* response, int status) {
     char status_str[4];
@@ -37,4 +48,14 @@ void add_connection_close(char* response) {
 void add_body(char* response, char* body) {
     strcat(response, "\r\n");
     strcat(response, body);
+}
+
+void add_date(char* response) {
+    strcat(response, "Date: ");
+
+    char date[80];
+    get_gmt_date(date, 80);
+    strcat(response, date);
+
+    strcat(response, "\r\n");
 }

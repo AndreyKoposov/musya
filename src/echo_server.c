@@ -39,6 +39,21 @@ void sigintHandler(int signal) {
     exit(EXIT_SUCCESS);
 }
 
+void send_all(char* buffer) {
+    unsigned long sent = 0;
+    size_t res_len = strlen(buffer);
+
+    while (sent < res_len) {
+        ssize_t k = send(client_s, buffer+sent, res_len-sent, 0);
+        if (k < 0) {
+            perror("Send Error");
+            break;
+        }
+        printf("<<< Sent %ld byte to %d\n", k, client_s);
+        sent += k;
+    }
+}
+
 int main() {
     int client_counter = 0;
 
@@ -105,45 +120,31 @@ int main() {
         // Read/Send
         char buffer[BUF_SIZE] = {0};
         ssize_t bytes = 0;
-        int counter = 0;
-        while (counter < 1) {
-            bytes = recv(client_s, buffer, sizeof(buffer)-1, 0);
-            if (bytes < 0) {
-                perror("Recieve Error");
-                break;
-            }
-            if (bytes == 0) {
-                printf("Connection closed by client\n");
-                break;
-            }
-            buffer[bytes] = '\0';
-            printf(">>> Read %ld byte from %d\n", bytes, client_s);
-            
-            // Send
-            unsigned long sent = 0;
-            char response[sizeof(buffer)] = {0};
-            char body[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
 
-            add_status(response, 200);
-            add_content_type(response);
-            add_content_length(response, strlen(body));
-            add_connection_close(response);
-            add_body(response, body);
-
-            size_t res_len = strlen(response);
-            memcpy(buffer, response, res_len);
-            printf("\nResponse = %s\n", buffer);
-            while (sent < res_len) {
-                ssize_t k = send(client_s, buffer+sent, res_len-sent, 0);
-                if (k < 0) {
-                    perror("Send Error");
-                    break;
-                }
-                printf("<<< Sent %ld byte to %d\n", k, client_s);
-                sent += k;
-            }
-            counter++;
+        bytes = recv(client_s, buffer, sizeof(buffer)-1, 0);
+        if (bytes < 0) {
+            perror("Recieve Error");
+            break;
         }
+        if (bytes == 0) {
+            printf("Connection closed by client\n");
+            break;
+        }
+        buffer[bytes] = '\0';
+        printf(">>> Read %ld byte from %d\n", bytes, client_s);
+        
+        // Send
+        char body[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
+
+        memset(buffer, 0, sizeof(buffer));
+        add_status(buffer, 200);
+        add_content_type(buffer);
+        add_date(buffer);
+        add_content_length(buffer, strlen(body));
+        add_connection_close(buffer);
+        add_body(buffer, body);
+
+        send_all(buffer);
 
         // Close
         close_client();
