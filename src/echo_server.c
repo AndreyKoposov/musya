@@ -103,7 +103,8 @@ int main() {
         // Read/Send
         char buffer[BUF_SIZE] = {0};
         ssize_t bytes = 0;
-        while (1) {
+        int counter = 0;
+        while (counter < 1) {
             bytes = recv(client_s, buffer, sizeof(buffer)-1, 0);
             if (bytes < 0) {
                 perror("Recieve Error");
@@ -114,19 +115,22 @@ int main() {
                 break;
             }
             buffer[bytes] = '\0';
-            printf(">>> Read %ld byte from %d: %s\n", bytes, client_s, buffer);
+            printf(">>> Read %ld byte from %d\n", bytes, client_s);
             
             // Send
-            ssize_t sent = 0;
-            while (sent < bytes) {
-                ssize_t k = send(client_s, buffer+sent, bytes-sent, 0);
+            unsigned long sent = 0;
+            char* answer = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 22\r\nConnection: close\r\n\r\n<h1>Hello, World!</h1>";
+            memcpy(buffer, answer, sizeof(buffer));
+            while (sent < strlen(answer)) {
+                ssize_t k = send(client_s, buffer+sent, strlen(answer)-sent, 0);
                 if (k < 0) {
                     perror("Send Error");
                     break;
                 }
-                printf("<<< Sent %ld byte to %d: %s\n", k, client_s, buffer+sent);
+                printf("<<< Sent %ld byte to %d\n", k, client_s);
                 sent += k;
             }
+            counter++;
         }
 
         // Close
