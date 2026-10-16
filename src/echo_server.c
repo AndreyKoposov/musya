@@ -130,10 +130,11 @@ int main() {
             add_connection_close(response);
             add_body(response, body);
 
-            memcpy(buffer, response, sizeof(response));
+            size_t res_len = strlen(response);
+            memcpy(buffer, response, res_len);
             printf("\nResponse = %s\n", buffer);
-            while (sent < strlen(response)) {
-                ssize_t k = send(client_s, buffer+sent, strlen(response)-sent, 0);
+            while (sent < res_len) {
+                ssize_t k = send(client_s, buffer+sent, res_len-sent, 0);
                 if (k < 0) {
                     perror("Send Error");
                     break;
