@@ -9,6 +9,8 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#include "http.h"
+
 
 #define BUF_SIZE 4096
 #define BACKLOG  10
@@ -119,10 +121,19 @@ int main() {
             
             // Send
             unsigned long sent = 0;
-            char* answer = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: 22\r\nConnection: close\r\n\r\n<h1>Hello, World!</h1>";
-            memcpy(buffer, answer, sizeof(buffer));
-            while (sent < strlen(answer)) {
-                ssize_t k = send(client_s, buffer+sent, strlen(answer)-sent, 0);
+            char response[sizeof(buffer)] = {0};
+            char body[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
+
+            add_status(response, 200);
+            add_content_type(response);
+            add_content_length(response, strlen(body));
+            add_connection_close(response);
+            add_body(response, body);
+
+            memcpy(buffer, response, sizeof(response));
+            printf("\nResponse = %s\n", buffer);
+            while (sent < strlen(response)) {
+                ssize_t k = send(client_s, buffer+sent, strlen(response)-sent, 0);
                 if (k < 0) {
                     perror("Send Error");
                     break;
