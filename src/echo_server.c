@@ -9,7 +9,9 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#include "request.h"
 #include "http.h"
+
 
 
 #define BUF_SIZE 4096
@@ -133,23 +135,15 @@ int main() {
                 printf("Connection closed by client\n");
                 break;
             }
-            char block[128];
-            strncpy(block, buffer+len, bytes);
-            printf(">>> Read\n%s \n", block);
+            printf(">>> Read\n%s \n", buffer);
 
-            char prev;
-            char curr;
             char header[64];
-            for (int i = len; i < len+bytes; i++) {
-                curr = buffer[i];
-                if (prev == '\r' && curr == '\n') {
-                    strncpy(header, buffer+len, i-1-len);
-                    printf("First Header: %s\n", header);
-                    memset(header, 0, sizeof(header));
-                    len = i;
-                }
-                prev = curr;
+            char* token = strtok(buffer, "\r\n");
+            while (token != NULL) {
+                printf("Header: %s\n", token);
+                token = strtok(NULL, "\r\n");
             }
+
             len += bytes;
             break;
         }

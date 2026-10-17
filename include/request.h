@@ -1,0 +1,1 @@
+void extract_headers(char* block, size_t n, char* headers[64][2048]);

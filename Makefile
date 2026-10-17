@@ -1,6 +1,6 @@
 # --- Компилятор и флаги ---
 CC      := gcc
-CFLAGS  := -Wall -Wextra -pedantic -std=c17 -Iinclude
+CFLAGS  := -Wall -Wextra -pedantic -std=c17 -Iinclude -g
 AR      := ar
 ARFLAGS := rcs
 
@@ -10,9 +10,13 @@ TEST_DIR  := tests
 BUILD_DIR := build
 
 # --- Файлы ---
-LIB_SRC   := $(SRC_DIR)/http.c
-LIB_OBJ   := $(BUILD_DIR)/http.o
-LIB       := $(BUILD_DIR)/libhttp.a
+LIB_SRC_HTTP   := $(SRC_DIR)/http.c
+LIB_OBJ_HTTP   := $(BUILD_DIR)/http.o
+LIB_HTTP       := $(BUILD_DIR)/libhttp.a
+
+LIB_SRC_REQ   := $(SRC_DIR)/request.c
+LIB_OBJ_REQ   := $(BUILD_DIR)/request.o
+LIB_REQ       := $(BUILD_DIR)/librequest.a
 
 APP_SRC   := $(SRC_DIR)/echo_server.c
 APP_OBJ   := $(BUILD_DIR)/echo_server.o
@@ -29,24 +33,32 @@ TEST_LIBS := -lcunit
 # Цели
 # =========================================================
 
-.PHONY: all lib app test clean run
+.PHONY: all lib_http lib_req app test clean run
 
 # По умолчанию собираем всё основное (без тестов)
 all: app
 
-# --- Статическая библиотека ---
-lib: $(LIB)
+# --- Статические библиотеки ---
+lib_http: $(LIB_HTTP)
 
-$(LIB): $(LIB_OBJ)
+$(LIB_HTTP): $(LIB_OBJ_HTTP)
 	$(AR) $(ARFLAGS) $@ $^
 
-$(LIB_OBJ): $(LIB_SRC) | $(BUILD_DIR)
+$(LIB_OBJ_HTTP): $(LIB_SRC_HTTP) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+lib_req: $(LIB_REQ)
+
+$(LIB_REQ): $(LIB_OBJ_REQ)
+	$(AR) $(ARFLAGS) $@ $^
+
+$(LIB_OBJ_REQ): $(LIB_SRC_REQ) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # --- Основное приложение ---
 app: $(APP)
 
-$(APP): $(APP_OBJ) $(LIB)
+$(APP): $(APP_OBJ) $(LIB_HTTP) $(LIB_REQ)
 	$(CC) $^ -o $@
 
 $(APP_OBJ): $(APP_SRC) | $(BUILD_DIR)
@@ -56,7 +68,7 @@ $(APP_OBJ): $(APP_SRC) | $(BUILD_DIR)
 test: $(TEST_BIN)
 	./$(TEST_BIN)
 
-$(TEST_BIN): $(TEST_OBJ) $(LIB)
+$(TEST_BIN): $(TEST_OBJ) $(LIB_HTTP) $(LIB_REQ)
 	$(CC) $^ $(TEST_LIBS) -o $@
 
 $(TEST_OBJ): $(TEST_SRC) | $(BUILD_DIR)
