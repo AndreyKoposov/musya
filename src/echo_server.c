@@ -123,8 +123,10 @@ int main() {
         char buffer[BUF_SIZE] = {0};
         ssize_t bytes = 0;
         ssize_t len = 0;
+        char* head;
+        char* body;
         while (1) {
-            bytes = recv(client_s, buffer, sizeof(buffer), 0);
+            bytes = recv(client_s, buffer+len, sizeof(buffer)-len, 0);
             // Error
             if (bytes < 0) {
                 perror("Recieve Error");
@@ -135,30 +137,39 @@ int main() {
                 printf("Connection closed by client\n");
                 break;
             }
-            printf(">>> Read\n%s \n", buffer);
 
-            char header[64];
-            char* token = strtok(buffer, "\r\n");
-            while (token != NULL) {
-                printf("Header: %s\n", token);
-                token = strtok(NULL, "\r\n");
+            char *pos = strstr(buffer, "\r\n\r\n");
+            if (pos == NULL) {
+                len += bytes;
+                // Buffer overflow
+                if (len >= sizeof(buffer)-1) {
+                    exit(EXIT_FAILURE);
+                }
+                continue;
+            }
+            else {
+                *pos = '\0';
+                head = buffer;
+                body = pos + 4;
+                printf("\nHead:\n%s\n", head);
+                printf("\nBody:\n%s\n", body);
             }
 
-            len += bytes;
+            parse_request(head);
             break;
         }
         
         // Send
-        char body[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
+        char body_content[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
         size_t cap = sizeof(buffer);
         memset(buffer, 0, cap);
 
         add_status(buffer, cap, 200);
         add_content_type(buffer, cap);
         add_date(buffer, cap);
-        add_content_length(buffer, cap, strlen(body));
+        add_content_length(buffer, cap, strlen(body_content));
         add_connection_close(buffer, cap);
-        add_body(buffer, cap, body);
+        add_body(buffer, cap, body_content);
 
         //send_all(client_s, buffer);
 
