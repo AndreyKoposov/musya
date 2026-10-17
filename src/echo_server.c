@@ -117,23 +117,42 @@ int main() {
             ip, 
             ntohs(client_addr.sin_port));
 
-        // Read
+        // Read cycle
         char buffer[BUF_SIZE] = {0};
         ssize_t bytes = 0;
+        ssize_t len = 0;
+        while (1) {
+            bytes = recv(client_s, buffer, sizeof(buffer), 0);
+            // Error
+            if (bytes < 0) {
+                perror("Recieve Error");
+                continue;
+            }
+            // Client close connection
+            if (bytes == 0) {
+                printf("Connection closed by client\n");
+                break;
+            }
+            char block[128];
+            strncpy(block, buffer+len, bytes);
+            printf(">>> Read\n%s \n", block);
 
-        bytes = recv(client_s, buffer, sizeof(buffer)-1, 0);
-        if (bytes < 0) {
-            perror("Recieve Error");
-            close_client();
-            continue;
+            char prev;
+            char curr;
+            char header[64];
+            for (int i = len; i < len+bytes; i++) {
+                curr = buffer[i];
+                if (prev == '\r' && curr == '\n') {
+                    strncpy(header, buffer+len, i-1-len);
+                    printf("First Header: %s\n", header);
+                    memset(header, 0, sizeof(header));
+                    len = i;
+                }
+                prev = curr;
+            }
+            len += bytes;
+            break;
         }
-        if (bytes == 0) {
-            printf("Connection closed by client\n");
-            close_client();
-            continue;
-        }
-        buffer[bytes] = '\0';
-        printf(">>> Read %zd byte from %d\n", bytes, client_s);
         
         // Send
         char body[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
@@ -147,7 +166,7 @@ int main() {
         add_connection_close(buffer, cap);
         add_body(buffer, cap, body);
 
-        send_all(client_s, buffer);
+        //send_all(client_s, buffer);
 
         // Close
         close_client();
