@@ -126,6 +126,7 @@ int main() {
         ssize_t len = 0;
         char* head;
         char* body;
+        int buffer_overflow = 0;
         while (1) {
             bytes = recv(client_s, buffer+len, sizeof(buffer)-len, 0);
             // Error
@@ -150,14 +151,22 @@ int main() {
             // Buffer overflow
             if (len >= (ssize_t)sizeof(buffer)) {
                 printf("Buffer overflow: Too big Head\n");
-                exit(EXIT_FAILURE);
+                buffer_overflow = 1;
+                break;
             }
         }
         // Request parse
         struct request req = parse_request(head);
         req.body = body;
         print_request(&req);
-        int status = process_request(&req);
+        int status = 0;
+        if (buffer_overflow)
+            status = 431;
+        else
+        if (req.is_valid == 0)
+            status = 400;
+        else
+            status = process_request(&req);
         // Reset buffer
         size_t cap = sizeof(buffer);
         memset(buffer, 0, cap);

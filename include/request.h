@@ -11,6 +11,7 @@ typedef struct request {
     int header_count;
     const char *body;
     size_t body_len;
+    int is_valid;
 } request;
 
 void print_request(struct request* req);
