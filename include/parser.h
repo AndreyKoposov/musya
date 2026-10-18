@@ -1,0 +1,1 @@
+struct request parse_request(char* head);

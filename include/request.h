@@ -13,6 +13,4 @@ typedef struct request {
     size_t body_len;
 } request;
 
-struct request parse_request(char* head);
-
 void print_request(struct request* req);

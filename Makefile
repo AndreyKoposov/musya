@@ -14,9 +14,13 @@ LIB_SRC_HTTP   := $(SRC_DIR)/http.c
 LIB_OBJ_HTTP   := $(BUILD_DIR)/http.o
 LIB_HTTP       := $(BUILD_DIR)/libhttp.a
 
+LIB_SRC_PARSER   := $(SRC_DIR)/parser.c
+LIB_OBJ_PARSER   := $(BUILD_DIR)/parser.o
+LIB_PARSER       := $(BUILD_DIR)/libparser.a
+
 LIB_SRC_REQ   := $(SRC_DIR)/request.c
 LIB_OBJ_REQ   := $(BUILD_DIR)/request.o
-LIB_REQ       := $(BUILD_DIR)/librequest.a
+LIB_REQ       := $(BUILD_DIR)/libreq.a
 
 APP_SRC   := $(SRC_DIR)/echo_server.c
 APP_OBJ   := $(BUILD_DIR)/echo_server.o
@@ -33,7 +37,7 @@ TEST_LIBS := -lcunit
 # Цели
 # =========================================================
 
-.PHONY: all lib_http lib_req app test clean run
+.PHONY: all lib_http lib_parser lib_req app test clean run
 
 # По умолчанию собираем всё основное (без тестов)
 all: app
@@ -47,6 +51,14 @@ $(LIB_HTTP): $(LIB_OBJ_HTTP)
 $(LIB_OBJ_HTTP): $(LIB_SRC_HTTP) | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+lib_parser: $(LIB_PARSER)
+
+$(LIB_PARSER): $(LIB_OBJ_PARSER)
+	$(AR) $(ARFLAGS) $@ $^
+
+$(LIB_OBJ_PARSER): $(LIB_SRC_PARSER) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 lib_req: $(LIB_REQ)
 
 $(LIB_REQ): $(LIB_OBJ_REQ)
@@ -58,7 +70,7 @@ $(LIB_OBJ_REQ): $(LIB_SRC_REQ) | $(BUILD_DIR)
 # --- Основное приложение ---
 app: $(APP)
 
-$(APP): $(APP_OBJ) $(LIB_HTTP) $(LIB_REQ)
+$(APP): $(APP_OBJ) $(LIB_HTTP) $(LIB_PARSER) $(LIB_REQ)
 	$(CC) $^ -o $@
 
 $(APP_OBJ): $(APP_SRC) | $(BUILD_DIR)
@@ -68,7 +80,7 @@ $(APP_OBJ): $(APP_SRC) | $(BUILD_DIR)
 test: $(TEST_BIN)
 	./$(TEST_BIN)
 
-$(TEST_BIN): $(TEST_OBJ) $(LIB_HTTP) $(LIB_REQ)
+$(TEST_BIN): $(TEST_OBJ) $(LIB_HTTP) $(LIB_PARSER) $(LIB_REQ)
 	$(CC) $^ $(TEST_LIBS) -o $@
 
 $(TEST_OBJ): $(TEST_SRC) | $(BUILD_DIR)
