@@ -151,11 +151,12 @@ int main() {
                 *pos = '\0';
                 head = buffer;
                 body = pos + 4;
-                printf("\nHead:\n%s\n", head);
-                printf("\nBody:\n%s\n", body);
+                // printf("\nHead:\n%s\n", head);
+                // printf("\nBody:\n%s\n", body);
             }
 
-            parse_request(head);
+            struct request req = parse_request(head);
+            print_request(&req);
             break;
         }
         
