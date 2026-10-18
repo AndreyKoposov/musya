@@ -139,25 +139,25 @@ int main() {
             }
 
             char *pos = strstr(buffer, "\r\n\r\n");
-            if (pos == NULL) {
-                len += bytes;
-                // Buffer overflow
-                if (len >= sizeof(buffer)-1) {
-                    exit(EXIT_FAILURE);
-                }
-                continue;
-            }
-            else {
+            if (pos != NULL) {
                 *pos = '\0';
                 head = buffer;
                 body = pos + 4;
-                // printf("\nHead:\n%s\n", head);
-                // printf("\nBody:\n%s\n", body);
+                break;
             }
+            len += bytes;
+            // Buffer overflow
+            if (len >= (ssize_t)sizeof(buffer)-1) {
+                exit(EXIT_FAILURE);
+            }
+        }
 
-            struct request req = parse_request(head);
-            print_request(&req);
-            break;
+        struct request req = parse_request(head);
+        print_request(&req);
+
+        memset(buffer, 0, sizeof(buffer));
+        while (1) {
+            
         }
         
         // Send
@@ -172,7 +172,7 @@ int main() {
         add_connection_close(buffer, cap);
         add_body(buffer, cap, body_content);
 
-        //send_all(client_s, buffer);
+        send_all(client_s, buffer);
 
         // Close
         close_client();

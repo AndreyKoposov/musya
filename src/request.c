@@ -12,7 +12,7 @@
 void parse_method(char* header, struct request* req) {
     strncpy(req->method, strtok(header, " "), 16);
     strncpy(req->path, strtok(NULL, " "), 2048);
-    strncpy(req->version, strtok(NULL, " "), 8);
+    strncpy(req->version, strtok(NULL, " "), 16);
 }
 
 void parse_header(char* header, struct request* req, size_t n) {
