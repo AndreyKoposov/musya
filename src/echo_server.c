@@ -157,12 +157,13 @@ int main() {
         struct request req = parse_request(head);
         req.body = body;
         print_request(&req);
+        int status = process_request(&req);
         // Reset buffer
         size_t cap = sizeof(buffer);
         memset(buffer, 0, cap);
         // Response construction
         char body_content[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
-        add_status(buffer, cap, 200);
+        add_status(buffer, cap, status);
         add_content_type(buffer, cap);
         add_date(buffer, cap);
         add_content_length(buffer, cap, strlen(body_content));

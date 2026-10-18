@@ -14,3 +14,5 @@ typedef struct request {
 } request;
 
 void print_request(struct request* req);
+
+int process_request(struct request* req);
