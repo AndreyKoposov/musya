@@ -114,7 +114,7 @@ int main() {
         // Print client info
         char ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &client_addr.sin_addr, ip, sizeof(ip));
-        printf("\n====\nAccepted new connection №%d\nIP: %s\nPORT: %d\n===\n\n", 
+        printf("\n====\nAccepted new connection №%d\nIP: %s\nPORT: %d\n====\n\n", 
             client_counter, 
             ip, 
             ntohs(client_addr.sin_port));
@@ -137,7 +137,7 @@ int main() {
                 printf("Connection closed by client\n");
                 break;
             }
-
+            // Split request to head and body
             char *pos = strstr(buffer, "\r\n\r\n");
             if (pos != NULL) {
                 *pos = '\0';
@@ -147,33 +147,28 @@ int main() {
             }
             len += bytes;
             // Buffer overflow
-            if (len >= (ssize_t)sizeof(buffer)-1) {
+            if (len >= (ssize_t)sizeof(buffer)) {
+                printf("Buffer overflow: Too big Head\n");
                 exit(EXIT_FAILURE);
             }
         }
-
+        // Request parse
         struct request req = parse_request(head);
+        req.body = body;
         print_request(&req);
-
-        memset(buffer, 0, sizeof(buffer));
-        while (1) {
-            
-        }
-        
-        // Send
-        char body_content[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
+        // Reset buffer
         size_t cap = sizeof(buffer);
         memset(buffer, 0, cap);
-
+        // Response construction
+        char body_content[] = "<h1>Hello, World!</h1><h2>This is a body</h2>";
         add_status(buffer, cap, 200);
         add_content_type(buffer, cap);
         add_date(buffer, cap);
         add_content_length(buffer, cap, strlen(body_content));
         add_connection_close(buffer, cap);
         add_body(buffer, cap, body_content);
-
+        // Send response
         send_all(client_s, buffer);
-
         // Close
         close_client();
     }

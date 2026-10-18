@@ -13,8 +13,6 @@ typedef struct request {
     size_t body_len;
 } request;
 
-void extract_headers(char* block, size_t n, char* headers[64][2048]);
-
 struct request parse_request(char* head);
 
 void print_request(struct request* req);
